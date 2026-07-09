@@ -16,12 +16,18 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.bhojanbandhu.platform.config.JwtService;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -49,12 +55,22 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        return new LoginResponse(UserSummary.from(user), "local-dev-token-" + user.getId());
+        var userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String token = jwtService.generateToken(userDetails);
+
+        return new LoginResponse(UserSummary.from(user), token);
     }
 
     @GetMapping("/me")
-    public String me() {
-        return "JWT authentication is not enabled yet. Use /api/v1/auth/login for local testing.";
+    public UserSummary me() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+        String email = authentication.getName();
+        User user = users.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return UserSummary.from(user);
     }
 
     public record RegisterRequest(

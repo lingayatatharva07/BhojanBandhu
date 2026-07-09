@@ -14,6 +14,7 @@ com\bhojanbandhu\platform\payment\Invoice.class
 com\bhojanbandhu\platform\user\AuthController$LoginResponse.class
 com\bhojanbandhu\platform\BhojanBandhuApplication.class
 com\bhojanbandhu\platform\subscription\SubscriptionController$PlanSummary.class
+com\bhojanbandhu\platform\config\JwtFilter.class
 com\bhojanbandhu\platform\menu\MenuController$MealSummary.class
 com\bhojanbandhu\platform\common\Enums$PaymentStatus.class
 com\bhojanbandhu\platform\order\OrderTrackingRepository.class
@@ -53,7 +54,9 @@ com\bhojanbandhu\platform\common\Enums$UserStatus.class
 com\bhojanbandhu\platform\provider\ProviderController.class
 com\bhojanbandhu\platform\review\ReviewRepository.class
 com\bhojanbandhu\platform\user\AuthController.class
+com\bhojanbandhu\platform\config\JwtService.class
 com\bhojanbandhu\platform\common\BaseEntity.class
+com\bhojanbandhu\platform\config\CustomUserDetailsService.class
 com\bhojanbandhu\platform\config\SecurityConfig.class
 com\bhojanbandhu\platform\menu\MenuController.class
 com\bhojanbandhu\platform\provider\ProviderController$CreateProviderRequest.class
