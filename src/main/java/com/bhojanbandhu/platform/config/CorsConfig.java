@@ -15,7 +15,8 @@ public class CorsConfig {
             "http://localhost:8081",
             "http://127.0.0.1:8081",
             "http://localhost:63342",
-            "http://127.0.0.1:63342"
+            "http://127.0.0.1:63342",
+            "https://dabbawala-frontend-one.vercel.app"
     );
 
     @Bean
