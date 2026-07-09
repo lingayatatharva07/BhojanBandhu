@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - BhojanBandhu</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="animated-fade">
+    <header>
+        <div class="header-container">
+            <div class="logo-section">
+                <span class="logo-icon">🥗</span>
+                <h2>BhojanBandhu</h2>
+                <span class="badge badge-primary">Customer Portal</span>
+            </div>
+            <div class="user-controls">
+                <div class="user-info">
+                    <div id="user-display-name" class="name">Customer Name</div>
+                    <div id="user-display-email" class="role">customer@domain.com</div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">Sign Out</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="dashboard-alert" class="alert"></div>
+
+        <div class="dashboard-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <button id="tab-browse" class="sidebar-btn active" onclick="switchSection('browse')">
+                    🔍 Browse Messes
+                </button>
+                <button id="tab-subs" class="sidebar-btn" onclick="switchSection('subs')">
+                    📅 My Subscriptions
+                </button>
+                <button id="tab-orders" class="sidebar-btn" onclick="switchSection('orders')">
+                    📦 My Orders
+                </button>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main>
+                <!-- Browse Section -->
+                <section id="section-browse" class="dashboard-section">
+                    <h2 style="margin-bottom: 8px;">Explore Tiffin & Mess Services</h2>
+                    <p style="margin-bottom: 24px;">Discover local food providers around you and subscribe to their plans or order individual meals.</p>
+                    <div id="providers-grid" class="grid-3">
+                        <!-- Filled by JavaScript -->
+                        <p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Loading food providers...</p>
+                    </div>
+                </section>
+
+                <!-- Subscriptions Section -->
+                <section id="section-subs" class="dashboard-section" style="display: none;">
+                    <h2 style="margin-bottom: 8px;">My Active Subscriptions</h2>
+                    <p style="margin-bottom: 24px;">Manage your daily meal subscriptions. Your schedule is shown below.</p>
+                    <div id="subs-list" class="grid-2">
+                        <!-- Filled by JavaScript -->
+                    </div>
+                </section>
+
+                <!-- Orders Section -->
+                <section id="section-orders" class="dashboard-section" style="display: none;">
+                    <h2 style="margin-bottom: 8px;">My Meal Orders</h2>
+                    <p style="margin-bottom: 24px;">Track status and delivery details for your one-time food orders.</p>
+                    <div id="orders-container" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Filled by JavaScript -->
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Provider Details Modal -->
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-content panel">
+            <button class="close-btn" onclick="closeModal()">✕</button>
+            <div id="modal-provider-header" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+                <h2 id="modal-prov-title">Mess Name</h2>
+                <div class="rating-stars" id="modal-prov-rating">⭐ 0.0</div>
+                <p id="modal-prov-desc" style="margin-top: 8px;">Description details</p>
+            </div>
+
+            <!-- Tab content inside modal -->
+            <div class="tab-container" style="margin-bottom: 20px;">
+                <button class="tab-btn active" id="modal-tab-plans-btn" onclick="switchModalTab('plans')">Subscription Plans</button>
+                <button class="tab-btn" id="modal-tab-menu-btn" onclick="switchModalTab('menu')">Daily Menu / Single Meals</button>
+            </div>
+
+            <div id="modal-alert" class="alert"></div>
+
+            <!-- Plans Tab Content -->
+            <div id="modal-section-plans" class="modal-tab-section">
+                <div id="modal-plans-grid" class="grid-2">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <!-- Menu Tab Content -->
+            <div id="modal-section-menu" class="modal-tab-section" style="display: none;">
+                <div id="modal-menu-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Subscription Confirmation Modal -->
+    <div id="confirm-sub-modal" class="modal-overlay" style="z-index: 1100;">
+        <div class="modal-content panel" style="max-width: 450px;">
+            <button class="close-btn" onclick="closeConfirmModal()">✕</button>
+            <h2>Confirm Subscription</h2>
+            <div style="margin: 20px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 16px 0;">
+                <p>Plan Name: <strong id="confirm-plan-name" style="color: #fff;">-</strong></p>
+                <p>Meal Type: <strong id="confirm-plan-type" style="color: #fff;">-</strong></p>
+                <p>Price: <strong id="confirm-plan-price" style="color: var(--color-primary);">-</strong></p>
+                <p>Duration: <strong id="confirm-plan-days" style="color: #fff;">-</strong></p>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="sub-start-date">Select Start Date</label>
+                    <input type="date" id="sub-start-date" required>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-sub">Confirm & Pay</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication
+        const customer = checkAuth('CUSTOMER');
+        
+        let activeProvider = null;
+        let selectedPlan = null;
+
+        if (customer) {
+            document.getElementById('user-display-name').textContent = customer.name;
+            document.getElementById('user-display-email').textContent = customer.email;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadProviders();
+            loadMySubscriptions();
+            loadMyOrders();
+
+            // Set default start date in subscription confirmation modal to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('sub-start-date').value = today;
+            document.getElementById('sub-start-date').min = today;
+        });
+
+        // Switch Dashboard Sections (Browse, Subs, Orders)
+        function switchSection(secId) {
+            document.querySelectorAll('.dashboard-section').forEach(sec => sec.style.display = 'none');
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(`section-${secId}`).style.display = 'block';
+            document.getElementById(`tab-${secId}`).classList.add('active');
+        }
+
+        // Fetch and load food providers list
+        async function loadProviders() {
+            try {
+                const providers = await apiFetch('/api/v1/providers');
+                const grid = document.getElementById('providers-grid');
+                grid.innerHTML = '';
+
+                if (providers.length === 0) {
+                    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">No active food providers registered yet.</p>`;
+                    return;
+                }
+
+                providers.forEach(p => {
+                    const stars = '⭐'.repeat(Math.round(p.rating || 5)) || '⭐ 5.0';
+                    const card = document.createElement('div');
+                    card.className = 'card animated-fade';
+                    card.innerHTML = `
+                        <div class="badge badge-primary" style="margin-bottom: 8px;">Active</div>
+                        <h3 class="card-title">${p.orgName}</h3>
+                        <div class="card-meta">
+                            <span>👤 Owner: ${p.ownerName}</span>
+                            <span class="rating-stars">${stars} (${p.rating ? p.rating.toFixed(1) : '5.0'})</span>
+                        </div>
+                        <p style="font-size: 0.9rem; min-height: 54px; margin-bottom: 16px;">${p.description || 'No description provided.'}</p>
+                        <button onclick="openProviderDetails(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="btn btn-primary" style="width: 100%; font-size: 0.9rem;">
+                            View Menu & Plans
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                showNotification('dashboard-alert', 'error', 'Error loading providers: ' + err.message);
+            }
+        }
+
+        // Open details modal for a single provider
+        async function openProviderDetails(provider) {
+            activeProvider = provider;
+            document.getElementById('modal-prov-title').textContent = provider.orgName;
+            document.getElementById('modal-prov-desc').textContent = provider.description || 'No description provided.';
+            
+            const stars = '⭐'.repeat(Math.round(provider.rating || 5)) || '⭐ 5.0';
+            document.getElementById('modal-prov-rating').textContent = `${stars} (${provider.rating ? provider.rating.toFixed(1) : '5.0'})`;
+
+            // Reset modal tabs
+            switchModalTab('plans');
+
+            // Load plans and menu items from server
+            await Promise.all([
+                loadProviderPlans(provider.id),
+                loadProviderMeals(provider.id)
+            ]);
+
+            document.getElementById('details-modal').style.display = 'grid';
+        }
+
+        function closeModal() {
+            document.getElementById('details-modal').style.display = 'none';
+            activeProvider = null;
+        }
+
+        function switchModalTab(tabId) {
+            document.querySelectorAll('.modal-tab-section').forEach(sec => sec.style.display = 'none');
+            document.getElementById('modal-tab-plans-btn').classList.remove('active');
+            document.getElementById('modal-tab-menu-btn').classList.remove('active');
+
+            if (tabId === 'plans') {
+                document.getElementById('modal-tab-plans-btn').classList.add('active');
+                document.getElementById('modal-section-plans').style.display = 'block';
+            } else {
+                document.getElementById('modal-tab-menu-btn').classList.add('active');
+                document.getElementById('modal-section-menu').style.display = 'block';
+            }
+        }
+
+        // Fetch Plans
+        async function loadProviderPlans(providerId) {
+            const grid = document.getElementById('modal-plans-grid');
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Loading plans...</p>';
+            
+            try {
+                const plans = await apiFetch(`/api/v1/catalog/providers/${providerId}/plans`);
+                grid.innerHTML = '';
+
+                if (plans.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-muted);">No subscription plans offered currently.</p>';
+                    return;
+                }
+
+                plans.forEach(plan => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h4 class="card-title">${plan.name || 'Standard Plan'}</h4>
+                        <div class="card-meta">
+                            <span class="badge badge-secondary">${plan.mealType}</span>
+                            <span>⏳ ${plan.durationDays} Days</span>
+                        </div>
+                        <p style="font-size: 0.85rem; min-height: 38px;">${plan.description || 'Enjoy delicious recurring meals.'}</p>
+                        <div class="card-price">₹${plan.price}</div>
+                        <button onclick="openConfirmSubscription(${JSON.stringify(plan).replace(/"/g, '&quot;')})" class="btn btn-primary" style="width: 100%; margin-top: 12px; font-size: 0.85rem; padding: 8px 16px;">
+                            Subscribe Plan
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--danger);">Error: ${err.message}</p>`;
+            }
+        }
+
+        // Fetch Meals
+        async function loadProviderMeals(providerId) {
+            const container = document.getElementById('modal-menu-list');
+            container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Loading meals menu...</p>';
+
+            try {
+                const meals = await apiFetch(`/api/v1/catalog/providers/${providerId}/meals`);
+                container.innerHTML = '';
+
+                if (meals.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-muted);">No meals available on the menu today.</p>';
+                    return;
+                }
+
+                meals.forEach(meal => {
+                    const row = document.createElement('div');
+                    row.className = 'item-row';
+                    row.innerHTML = `
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <strong style="color: #fff; font-size: 1.05rem;">${meal.name}</strong>
+                                <span class="badge badge-secondary" style="font-size: 0.65rem;">${meal.mealType}</span>
+                            </div>
+                            <p style="font-size: 0.85rem; margin-top: 2px;">${meal.title || ''} • ${meal.description || 'Fresh food daily'}</p>
+                            <span style="font-size: 0.75rem; color: var(--color-primary-hover);">🔥 ${meal.totalCalories || 450} kcal</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span style="font-size: 1.15rem; font-weight: 700; color: var(--color-primary);">₹${meal.price}</span>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" id="qty-${meal.id}" value="1" min="1" max="10" style="width: 50px; padding: 6px; text-align: center;">
+                                <button onclick="orderMeal(${JSON.stringify(meal).replace(/"/g, '&quot;')})" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;">
+                                    Order
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (err) {
+                container.innerHTML = `<p style="text-align: center; color: var(--danger);">Error: ${err.message}</p>`;
+            }
+        }
+
+        // Subscribe Plan Confirm Trigger
+        function openConfirmSubscription(plan) {
+            selectedPlan = plan;
+            document.getElementById('confirm-plan-name').textContent = plan.name || 'Standard Plan';
+            document.getElementById('confirm-plan-type').textContent = plan.mealType;
+            document.getElementById('confirm-plan-price').textContent = `₹${plan.price}`;
+            document.getElementById('confirm-plan-days').textContent = `${plan.durationDays} Days`;
+            
+            document.getElementById('btn-submit-sub').onclick = submitSubscription;
+            document.getElementById('confirm-sub-modal').style.display = 'grid';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-sub-modal').style.display = 'none';
+            selectedPlan = null;
+        }
+
+        async function submitSubscription() {
+            if (!selectedPlan || !activeProvider) return;
+            const startDate = document.getElementById('sub-start-date').value;
+
+            try {
+                const sub = await apiFetch('/api/v1/subscriptions', {
+                    method: 'POST',
+                    body: {
+                        customerId: customer.id,
+                        planId: selectedPlan.id,
+                        startDate: startDate
+                    }
+                });
+
+                // Save to local storage for local tracking list
+                StorageSync.saveSubscription(sub, selectedPlan.name, activeProvider.orgName);
+                
+                showNotification('modal-alert', 'success', 'Successfully Subscribed to ' + selectedPlan.name);
+                
+                closeConfirmModal();
+                closeModal();
+                loadMySubscriptions();
+                switchSection('subs');
+            } catch (err) {
+                showNotification('modal-alert', 'error', 'Subscription failed: ' + err.message);
+                closeConfirmModal();
+            }
+        }
+
+        // Place Single Meal Order
+        async function orderMeal(meal) {
+            const qty = parseInt(document.getElementById(`qty-${meal.id}`).value) || 1;
+            
+            try {
+                const order = await apiFetch('/api/v1/orders', {
+                    method: 'POST',
+                    body: {
+                        customerId: customer.id,
+                        providerId: activeProvider.id,
+                        paymentMethod: 'UPI',
+                        items: [
+                            {
+                                mealId: meal.id,
+                                quantity: qty
+                            }
+                        ]
+                    }
+                });
+
+                // Cache placed order in local storage list for customer display
+                const itemsText = `${meal.name} (x${qty})`;
+                StorageSync.saveOrder(order, itemsText, activeProvider.orgName);
+
+                showNotification('modal-alert', 'success', `Order placed successfully for ${itemsText}!`);
+                
+                closeModal();
+                loadMyOrders();
+                switchSection('orders');
+            } catch (err) {
+                showNotification('modal-alert', 'error', 'Order failed: ' + err.message);
+            }
+        }
+
+        // Render My Subscriptions Tab
+        function loadMySubscriptions() {
+            const list = document.getElementById('subs-list');
+            list.innerHTML = '';
+            
+            const subs = StorageSync.getSubscriptions(customer.id);
+
+            if (subs.length === 0) {
+                list.innerHTML = `<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">You have no active plan subscriptions. Go to "Browse Messes" to subscribe.</p>`;
+                return;
+            }
+
+            subs.forEach(sub => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <span class="badge badge-primary">${sub.status}</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">ID: #${sub.id}</span>
+                    </div>
+                    <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 4px;">${sub.planName}</h3>
+                    <p style="font-size: 0.9rem; color: #fff; margin-bottom: 8px;">📍 Provider: ${sub.providerOrgName}</p>
+                    
+                    <div style="font-size: 0.85rem; border-top: 1px solid var(--border-color); margin-top: 12px; padding-top: 12px; display: grid; gap: 4px;">
+                        <div>🗓️ Starts: ${sub.startDate}</div>
+                        <div>🗓️ Expires: ${sub.endDate}</div>
+                        <div style="font-weight: 700; color: var(--color-primary); margin-top: 6px;">Total Paid: ₹${sub.amount}</div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // Render My Orders Tab
+        function loadMyOrders() {
+            const container = document.getElementById('orders-container');
+            container.innerHTML = '';
+            
+            const orders = StorageSync.getOrders('CUSTOMER', customer.id);
+
+            if (orders.length === 0) {
+                container.innerHTML = `<p style="text-align: center; padding: 40px; color: var(--text-muted);">You have not placed any meal orders yet.</p>`;
+                return;
+            }
+
+            orders.forEach(order => {
+                let statusBadge = 'badge-secondary';
+                if (order.status === 'DELIVERED') statusBadge = 'badge-primary';
+                else if (order.status === 'PREPARING' || order.status === 'OUT_FOR_DELIVERY') statusBadge = 'badge-warning';
+                else if (order.status === 'CANCELLED') statusBadge = 'badge-danger';
+
+                const card = document.createElement('div');
+                card.className = 'card animated-fade';
+                card.style.display = 'flex';
+                card.style.justifyContent = 'space-between';
+                card.style.alignItems = 'center';
+                card.style.padding = '16px 24px';
+                
+                card.innerHTML = `
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                            <span class="badge ${statusBadge}">${order.status}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Order ID: #${order.id}</span>
+                        </div>
+                        <strong style="color: #fff; font-size: 1.1rem;">${order.itemsText}</strong>
+                        <p style="font-size: 0.85rem; margin-top: 2px;">📍 Provider: ${order.providerOrgName}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.25rem; font-weight: 800; color: var(--color-primary);">₹${order.totalAmount}</span>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">UPI Payment Captured</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>

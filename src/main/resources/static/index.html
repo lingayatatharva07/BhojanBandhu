@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BhojanBandhu - Authentication Portal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="animated-fade">
+    <div class="container">
+        <div class="auth-container panel">
+            <div class="auth-header">
+                <h1>BhojanBandhu</h1>
+                <p class="subtitle text-gradient">Your Trusted Tiffin & Mess Companion</p>
+            </div>
+
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('register-customer')">Register Customer</button>
+                <button class="tab-btn" onclick="switchTab('register-provider')">Register Provider</button>
+            </div>
+
+            <div id="auth-alert" class="alert"></div>
+
+            <!-- Login Section -->
+            <div id="login-section" class="auth-section">
+                <h2 style="font-size: 1.4rem; margin-bottom: 20px;">Welcome Back</h2>
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" required placeholder="name@domain.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Sign In
+                    </button>
+                </form>
+            </div>
+
+            <!-- Customer Registration Section -->
+            <div id="register-customer-section" class="auth-section" style="display: none;">
+                <h2 style="font-size: 1.4rem; margin-bottom: 20px;">Create Customer Account</h2>
+                <form id="customer-reg-form" onsubmit="handleCustomerRegister(event)">
+                    <div class="form-group">
+                        <label for="cust-name">Full Name</label>
+                        <input type="text" id="cust-name" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-email">Email Address</label>
+                        <input type="email" id="cust-email" required placeholder="john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-phone">Phone Number</label>
+                        <input type="tel" id="cust-phone" required placeholder="9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-password">Password</label>
+                        <input type="password" id="cust-password" required minlength="6" placeholder="At least 6 characters">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Create Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- Provider Registration Section -->
+            <div id="register-provider-section" class="auth-section" style="display: none;">
+                <h2 style="font-size: 1.4rem; margin-bottom: 20px;">Register Mess / Tiffin Service</h2>
+                <form id="provider-reg-form" onsubmit="handleProviderRegister(event)">
+                    <div class="form-group">
+                        <label for="prov-name">Owner Full Name</label>
+                        <input type="text" id="prov-name" required placeholder="Ramesh Kumar">
+                    </div>
+                    <div class="form-group">
+                        <label for="prov-email">Business Email</label>
+                        <input type="email" id="prov-email" required placeholder="contact@rameshmeals.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="prov-phone">Phone Number</label>
+                        <input type="tel" id="prov-phone" required placeholder="9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label for="prov-password">Password</label>
+                        <input type="password" id="prov-password" required minlength="6" placeholder="At least 6 characters">
+                    </div>
+                    <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <label for="prov-org">Mess / Tiffin Service Name</label>
+                        <input type="text" id="prov-org" required placeholder="Annapurna Homemade Tiffins">
+                    </div>
+                    <div class="form-group">
+                        <label for="prov-desc">Brief Service Description</label>
+                        <textarea id="prov-desc" placeholder="Specialized in hygienic North Indian and South Indian lunch & dinner services."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Register Business
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check if user is already logged in and redirect
+        window.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
+            if (user) {
+                if (user.role === 'CUSTOMER') {
+                    window.location.href = 'customer.html';
+                } else if (user.role === 'PROVIDER') {
+                    window.location.href = 'provider.html';
+                }
+            }
+        });
+
+        function switchTab(tabId) {
+            // Update active state on tab buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show corresponding section
+            document.querySelectorAll('.auth-section').forEach(section => section.style.display = 'none');
+            
+            if (tabId === 'login') {
+                buttons[0].classList.add('active');
+                document.getElementById('login-section').style.display = 'block';
+            } else if (tabId === 'register-customer') {
+                buttons[1].classList.add('active');
+                document.getElementById('register-customer-section').style.display = 'block';
+            } else if (tabId === 'register-provider') {
+                buttons[2].classList.add('active');
+                document.getElementById('register-provider-section').style.display = 'block';
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await apiFetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    body: { email, password }
+                });
+
+                localStorage.setItem('bb_user', JSON.stringify(response.user));
+                localStorage.setItem('bb_token', response.token);
+
+                if (response.user.role === 'CUSTOMER') {
+                    showNotification('auth-alert', 'success', 'Login successful! Redirecting...');
+                    setTimeout(() => window.location.href = 'customer.html', 1000);
+                } else if (response.user.role === 'PROVIDER') {
+                    // Find their provider profile ID
+                    showNotification('auth-alert', 'success', 'Fetching provider profile...');
+                    const providerList = await apiFetch('/api/v1/providers');
+                    const myProvider = providerList.find(p => p.userId === response.user.id);
+                    
+                    if (myProvider) {
+                        localStorage.setItem('bb_provider_id', myProvider.id);
+                        localStorage.setItem('bb_provider', JSON.stringify(myProvider));
+                        showNotification('auth-alert', 'success', 'Login successful! Redirecting to Provider dashboard...');
+                        setTimeout(() => window.location.href = 'provider.html', 1000);
+                    } else {
+                        // If provider profile not found (unlikely), store a placeholder or create one
+                        showNotification('auth-alert', 'error', 'No provider profile found for this user. Please register as a Provider.');
+                    }
+                } else {
+                    showNotification('auth-alert', 'error', 'Unsupported user role: ' + response.user.role);
+                }
+            } catch (err) {
+                showNotification('auth-alert', 'error', err.message);
+            }
+        }
+
+        async function handleCustomerRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('cust-name').value;
+            const email = document.getElementById('cust-email').value;
+            const phone = document.getElementById('cust-phone').value;
+            const password = document.getElementById('cust-password').value;
+
+            try {
+                const user = await apiFetch('/api/v1/auth/register', {
+                    method: 'POST',
+                    body: {
+                        name,
+                        email,
+                        phone,
+                        password,
+                        role: 'CUSTOMER'
+                    }
+                });
+
+                showNotification('auth-alert', 'success', 'Account created! Logging you in...');
+                
+                // Automatically log in after registration
+                const loginResponse = await apiFetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    body: { email, password }
+                });
+
+                localStorage.setItem('bb_user', JSON.stringify(loginResponse.user));
+                localStorage.setItem('bb_token', loginResponse.token);
+                
+                setTimeout(() => window.location.href = 'customer.html', 1200);
+            } catch (err) {
+                showNotification('auth-alert', 'error', err.message);
+            }
+        }
+
+        async function handleProviderRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('prov-name').value;
+            const email = document.getElementById('prov-email').value;
+            const phone = document.getElementById('prov-phone').value;
+            const password = document.getElementById('prov-password').value;
+            const orgName = document.getElementById('prov-org').value;
+            const description = document.getElementById('prov-desc').value;
+
+            try {
+                // Step 1: Create user profile
+                const user = await apiFetch('/api/v1/auth/register', {
+                    method: 'POST',
+                    body: {
+                        name,
+                        email,
+                        phone,
+                        password,
+                        role: 'PROVIDER'
+                    }
+                });
+
+                showNotification('auth-alert', 'success', 'User account created. Creating business profile...');
+
+                // Step 2: Create provider profile
+                const provider = await apiFetch('/api/v1/providers', {
+                    method: 'POST',
+                    body: {
+                        userId: user.id,
+                        orgName,
+                        ownerName: name,
+                        description
+                    }
+                });
+
+                showNotification('auth-alert', 'success', 'Business registered successfully! Logging you in...');
+
+                // Step 3: Login automatically
+                const loginResponse = await apiFetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    body: { email, password }
+                });
+
+                localStorage.setItem('bb_user', JSON.stringify(loginResponse.user));
+                localStorage.setItem('bb_token', loginResponse.token);
+                localStorage.setItem('bb_provider_id', provider.id);
+                localStorage.setItem('bb_provider', JSON.stringify(provider));
+
+                setTimeout(() => window.location.href = 'provider.html', 1200);
+            } catch (err) {
+                showNotification('auth-alert', 'error', err.message);
+            }
+        }
+    </script>
+</body>
+</html>

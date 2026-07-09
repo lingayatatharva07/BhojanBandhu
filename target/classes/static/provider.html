@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Dashboard - BhojanBandhu</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="animated-fade">
+    <header>
+        <div class="header-container">
+            <div class="logo-section">
+                <span class="logo-icon">🏪</span>
+                <h2>BhojanBandhu</h2>
+                <span class="badge badge-warning" id="provider-badge">Provider Portal</span>
+            </div>
+            <div class="user-controls">
+                <div class="user-info">
+                    <div id="provider-display-org" class="name">Mess Name</div>
+                    <div id="provider-display-owner" class="role">Owner Name</div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">Sign Out</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="dashboard-alert" class="alert"></div>
+
+        <div class="dashboard-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <button id="tab-orders" class="sidebar-btn active" onclick="switchSection('orders')">
+                    📥 Incoming Orders
+                </button>
+                <button id="tab-menu" class="sidebar-btn" onclick="switchSection('menu')">
+                    🍛 Manage Menu
+                </button>
+                <button id="tab-plans" class="sidebar-btn" onclick="switchSection('plans')">
+                    📋 Manage Plans
+                </button>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main>
+                <!-- Orders Section -->
+                <section id="section-orders" class="dashboard-section">
+                    <h2 style="margin-bottom: 8px;">Incoming Customer Orders</h2>
+                    <p style="margin-bottom: 24px;">Track and update delivery progress for meals ordered by customers.</p>
+                    <div id="orders-container" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Filled by JS -->
+                    </div>
+                </section>
+
+                <!-- Manage Menu Section -->
+                <section id="section-menu" class="dashboard-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2>Meals Catalog / Menu</h2>
+                        <button onclick="openAddMealModal()" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+                            ➕ Add New Meal
+                        </button>
+                    </div>
+                    <div id="menu-list-container" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Filled by JS -->
+                    </div>
+                </section>
+
+                <!-- Manage Plans Section -->
+                <section id="section-plans" class="dashboard-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2>Subscription Plans</h2>
+                        <button onclick="openAddPlanModal()" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+                            ➕ Add Subscription Plan
+                        </button>
+                    </div>
+                    <div id="plans-grid" class="grid-2">
+                        <!-- Filled by JS -->
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Meal Modal -->
+    <div id="add-meal-modal" class="modal-overlay">
+        <div class="modal-content panel" style="max-width: 500px;">
+            <button class="close-btn" onclick="closeAddMealModal()">✕</button>
+            <h2>Add New Meal Item</h2>
+            <form id="add-meal-form" onsubmit="handleAddMeal(event)" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="meal-name">Meal Name</label>
+                    <input type="text" id="meal-name" required placeholder="e.g. Special Paneer Thali">
+                </div>
+                <div class="form-group">
+                    <label for="meal-title">Subtitle / Quick Tag</label>
+                    <input type="text" id="meal-title" placeholder="e.g. 4 Roti, Paneer Subji, Dal Fry, Rice">
+                </div>
+                <div class="form-group">
+                    <label for="meal-desc">Description</label>
+                    <textarea id="meal-desc" placeholder="Details about ingredients, spice level, food allergens..."></textarea>
+                </div>
+                <div class="grid-2" style="gap: 16px;">
+                    <div class="form-group">
+                        <label for="meal-type">Meal Type</label>
+                        <select id="meal-type" required>
+                            <option value="BREAKFAST">BREAKFAST</option>
+                            <option value="LUNCH" selected>LUNCH</option>
+                            <option value="DINNER">DINNER</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="meal-price">Price (₹)</label>
+                        <input type="number" id="meal-price" required min="1" placeholder="100">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="meal-calories">Total Calories (kcal)</label>
+                    <input type="number" id="meal-calories" min="0" placeholder="600">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddMealModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Meal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Plan Modal -->
+    <div id="add-plan-modal" class="modal-overlay">
+        <div class="modal-content panel" style="max-width: 500px;">
+            <button class="close-btn" onclick="closeAddPlanModal()">✕</button>
+            <h2>Add Subscription Plan</h2>
+            <form id="add-plan-form" onsubmit="handleAddPlan(event)" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="plan-name">Plan Name</label>
+                    <input type="text" id="plan-name" required placeholder="e.g. Premium Monthly Lunch Plan">
+                </div>
+                <div class="form-group">
+                    <label for="plan-desc">Description</label>
+                    <textarea id="plan-desc" placeholder="Details like delivery timing slot, exclusion days..."></textarea>
+                </div>
+                <div class="grid-2" style="gap: 16px;">
+                    <div class="form-group">
+                        <label for="plan-type">Meal Type</label>
+                        <select id="plan-type" required>
+                            <option value="BREAKFAST">BREAKFAST</option>
+                            <option value="LUNCH" selected>LUNCH</option>
+                            <option value="DINNER">DINNER</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="plan-days">Duration (Days)</label>
+                        <input type="number" id="plan-days" required min="1" placeholder="30">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="plan-price">Total Price (₹)</label>
+                    <input type="number" id="plan-price" required min="1" placeholder="2500">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddPlanModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check provider authentication
+        const providerUser = checkAuth('PROVIDER');
+        const providerId = localStorage.getItem('bb_provider_id');
+        const providerData = JSON.parse(localStorage.getItem('bb_provider') || '{}');
+
+        if (providerData) {
+            document.getElementById('provider-display-org').textContent = providerData.orgName || 'Mess Service';
+            document.getElementById('provider-display-owner').textContent = `Owner: ${providerData.ownerName || 'Unknown'}`;
+            
+            const rating = providerData.rating ? providerData.rating.toFixed(1) : '5.0';
+            document.getElementById('provider-badge').textContent = `PROVIDER | ⭐ ${rating}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadIncomingOrders();
+            loadMenuCatalog();
+            loadPlans();
+        });
+
+        // Toggle sections
+        function switchSection(secId) {
+            document.querySelectorAll('.dashboard-section').forEach(sec => sec.style.display = 'none');
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(`section-${secId}`).style.display = 'block';
+            document.getElementById(`tab-${secId}`).classList.add('active');
+        }
+
+        // Fetch & Load incoming orders from the mock synced local storage
+        function loadIncomingOrders() {
+            const container = document.getElementById('orders-container');
+            container.innerHTML = '';
+
+            const orders = StorageSync.getOrders('PROVIDER', providerId);
+
+            if (orders.length === 0) {
+                container.innerHTML = `<p style="text-align: center; padding: 40px; color: var(--text-muted);">No incoming orders received yet.</p>`;
+                return;
+            }
+
+            // Display in reverse order so newest are on top
+            [...orders].reverse().forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'card animated-fade';
+                card.style.display = 'flex';
+                card.style.justifyContent = 'space-between';
+                card.style.alignItems = 'center';
+                card.style.padding = '20px 24px';
+
+                card.innerHTML = `
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Order ID: #${order.id}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Customer ID: #${order.customerId}</span>
+                        </div>
+                        <strong style="color: #fff; font-size: 1.15rem;">${order.itemsText}</strong>
+                        <p style="font-size: 0.85rem; margin-top: 4px; color: var(--color-primary);">Amount: ₹${order.totalAmount}</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                        <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Change Status</label>
+                        <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding: 8px 12px; background-color: #1f2937; border-color: var(--border-color); font-size: 0.85rem; border-radius: 8px; width: 170px;">
+                            <option value="PLACED" ${order.status === 'PLACED' ? 'selected' : ''}>PLACED</option>
+                            <option value="CONFIRMED" ${order.status === 'CONFIRMED' ? 'selected' : ''}>CONFIRMED</option>
+                            <option value="PREPARING" ${order.status === 'PREPARING' ? 'selected' : ''}>PREPARING</option>
+                            <option value="OUT_FOR_DELIVERY" ${order.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>OUT FOR DELIVERY</option>
+                            <option value="DELIVERED" ${order.status === 'DELIVERED' ? 'selected' : ''}>DELIVERED</option>
+                            <option value="CANCELLED" ${order.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                        </select>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Change order status triggers PATCH request to Spring Boot backend
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                await apiFetch(`/api/v1/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    body: {
+                        status: newStatus,
+                        description: `Status updated to ${newStatus} by Provider.`
+                    }
+                });
+
+                // Update mock storage sync
+                StorageSync.updateOrderStatus(orderId, newStatus);
+                showNotification('dashboard-alert', 'success', `Order #${orderId} status successfully updated to ${newStatus}`);
+                loadIncomingOrders();
+            } catch (err) {
+                showNotification('dashboard-alert', 'error', 'Failed to update order status: ' + err.message);
+            }
+        }
+
+        // Load Meals Menu Catalog
+        async function loadMenuCatalog() {
+            const container = document.getElementById('menu-list-container');
+            container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Loading menu items...</p>';
+
+            try {
+                const meals = await apiFetch(`/api/v1/catalog/providers/${providerId}/meals`);
+                container.innerHTML = '';
+
+                if (meals.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-muted);">Your menu catalog is empty. Click "Add New Meal" to list item details.</p>';
+                    return;
+                }
+
+                meals.forEach(meal => {
+                    const row = document.createElement('div');
+                    row.className = 'item-row';
+                    row.innerHTML = `
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <strong style="color: #fff; font-size: 1.05rem;">${meal.name}</strong>
+                                <span class="badge badge-secondary" style="font-size: 0.65rem;">${meal.mealType}</span>
+                            </div>
+                            <p style="font-size: 0.85rem; margin-top: 2px;">${meal.title || ''} • ${meal.description || 'No description provided'}</p>
+                            <span style="font-size: 0.75rem; color: var(--color-primary-hover);">🔥 ${meal.totalCalories || 0} kcal</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 1.2rem; font-weight: 700; color: var(--color-primary);">₹${meal.price}</span>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (err) {
+                container.innerHTML = `<p style="text-align: center; color: var(--danger);">Error loading menu catalog: ${err.message}</p>`;
+            }
+        }
+
+        // Load Subscription Plans list
+        async function loadPlans() {
+            const grid = document.getElementById('plans-grid');
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Loading plans...</p>';
+
+            try {
+                const plans = await apiFetch(`/api/v1/catalog/providers/${providerId}/plans`);
+                grid.innerHTML = '';
+
+                if (plans.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">No subscription plans created yet.</p>';
+                    return;
+                }
+
+                plans.forEach(plan => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h4 class="card-title">${plan.name || 'Standard Plan'}</h4>
+                        <div class="card-meta">
+                            <span class="badge badge-secondary">${plan.mealType}</span>
+                            <span>⏳ ${plan.durationDays} Days</span>
+                        </div>
+                        <p style="font-size: 0.85rem; min-height: 38px;">${plan.description || 'Enjoy delicious recurring meals.'}</p>
+                        <div class="card-price">₹${plan.price}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--danger);">Error loading plans: ${err.message}</p>`;
+            }
+        }
+
+        // Modals Management
+        function openAddMealModal() { document.getElementById('add-meal-modal').style.display = 'grid'; }
+        function closeAddMealModal() { document.getElementById('add-meal-modal').style.display = 'none'; }
+        function openAddPlanModal() { document.getElementById('add-plan-modal').style.display = 'grid'; }
+        function closeAddPlanModal() { document.getElementById('add-plan-modal').style.display = 'none'; }
+
+        // Form Submit Actions
+        async function handleAddMeal(e) {
+            e.preventDefault();
+            const name = document.getElementById('meal-name').value;
+            const title = document.getElementById('meal-title').value;
+            const description = document.getElementById('meal-desc').value;
+            const mealType = document.getElementById('meal-type').value;
+            const price = parseFloat(document.getElementById('meal-price').value);
+            const totalCalories = parseInt(document.getElementById('meal-calories').value) || null;
+
+            try {
+                await apiFetch(`/api/v1/providers/${providerId}/meals`, {
+                    method: 'POST',
+                    body: {
+                        name,
+                        title,
+                        description,
+                        mealType,
+                        price,
+                        totalCalories
+                    }
+                });
+
+                showNotification('dashboard-alert', 'success', 'Successfully added meal to catalog');
+                document.getElementById('add-meal-form').reset();
+                closeAddMealModal();
+                loadMenuCatalog();
+            } catch (err) {
+                showNotification('dashboard-alert', 'error', 'Failed to add meal: ' + err.message);
+            }
+        }
+
+        async function handleAddPlan(e) {
+            e.preventDefault();
+            const name = document.getElementById('plan-name').value;
+            const description = document.getElementById('plan-desc').value;
+            const mealType = document.getElementById('plan-type').value;
+            const durationDays = parseInt(document.getElementById('plan-days').value);
+            const price = parseFloat(document.getElementById('plan-price').value);
+
+            try {
+                await apiFetch(`/api/v1/providers/${providerId}/plans`, {
+                    method: 'POST',
+                    body: {
+                        name,
+                        description,
+                        mealType,
+                        durationDays,
+                        price
+                    }
+                });
+
+                showNotification('dashboard-alert', 'success', 'Successfully created subscription plan');
+                document.getElementById('add-plan-form').reset();
+                closeAddPlanModal();
+                loadPlans();
+            } catch (err) {
+                showNotification('dashboard-alert', 'error', 'Failed to create plan: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
